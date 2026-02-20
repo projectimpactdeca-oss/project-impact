@@ -828,6 +828,8 @@
                 }
             }
         </style>
+        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     </head>
     <body>
         <div class="app-layout">
@@ -1491,34 +1493,15 @@
                 <p>Social Return on Investment (SROI) measures value not reflected in financial accounts, such as social, economic, and environmental capital created by your venture.</p>
             </div>
             <!-- Austin Impact Map -->
-            <div class="card" style="background: var(--text-dark); color: white;">
-                <h3 style="color: white; margin-bottom: 5px;">Austin Reach</h3>
-                <p style="font-size: 12px; opacity: 0.7; margin-bottom: 20px;">Active ventures in metro area.</p>
-                <div style="flex: 1; position: relative; border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; background: rgba(255,255,255,0.05); min-height: 200px;">
-                    <svg viewBox="0 0 200 200" style="width: 100%; height: 100%;">
-                        <path d="M40,100 Q60,50 100,40 T160,100 T100,160 T40,100" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="2"/>
-                        <path d="M80,100 L120,100 M100,80 L100,120" fill="none" stroke="rgba(255,255,255,0.1)"/>
-                        <circle cx="100" cy="100" r="3" fill="#059669">
-                            <animate attributeName="opacity" values="0;1;0" dur="2s" repeatCount="indefinite"/>
-                        </circle>
-                        <circle cx="120" cy="80" r="2" fill="#d97706">
-                            <animate attributeName="opacity" values="0;1;0" dur="3s" repeatCount="indefinite"/>
-                        </circle>
-                        <circle cx="80" cy="130" r="2" fill="#d97706">
-                            <animate attributeName="opacity" values="0;1;0" dur="2.5s" repeatCount="indefinite"/>
-                        </circle>
-                        <circle cx="140" cy="110" r="2" fill="#d97706">
-                            <animate attributeName="opacity" values="0;1;0" dur="4s" repeatCount="indefinite"/>
-                        </circle>
-                    </svg>
-                    <div style="position: absolute; bottom: 10px; left: 10px; font-size: 10px; font-weight: 700;">
-                        <span style="color: #059669;">●</span>
-                        HQ <span style="color: #d97706; margin-left: 8px;">●</span>
-                        Partner
-                                
-                    </div>
-                </div>
-            </div>
+            <div class="card" style="background: var(--text-dark); color: white; padding: 16px;">
+  <h3 style="color: white; margin-bottom: 5px;">Austin Reach</h3>
+  <p style="font-size: 12px; opacity: 0.7; margin-bottom: 10px;">Active ventures in metro area.</p>
+  <div id="austin-map" style="height: 220px; width: 100%; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); background: #2d3748;"></div>
+  <div style="margin-top: 8px; font-size: 10px; display: flex; gap: 12px; justify-content: center;">
+    <span><span style="color: #f97316;">●</span> Partner</span>
+    <span><span style="color: #059669;">●</span> Fellow HQ</span>
+  </div>
+</div>
         </div>
     </div>
 </section>
@@ -2123,4 +2106,64 @@ socket.on('ai-history', (history) => {
         });
     }
 });
+    // ===== Austin Map (Leaflet) =====
+let mapInitialized = false;
+let mapInstance = null;
+
+function initAustinMap() {
+  if (mapInitialized) return;
+  const mapContainer = document.getElementById('austin-map');
+  if (!mapContainer) return;
+
+  // Center on Austin, TX
+  mapInstance = L.map('austin-map').setView([30.2672, -97.7431], 12);
+
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+    className: 'map-tiles' // optional for styling
+  }).addTo(mapInstance);
+
+  // Sample partners (lat, lng, name, description)
+  const partners = [
+    { lat: 30.269, lng: -97.749, name: 'Capital Factory', desc: 'Startup hub & partner' },
+    { lat: 30.263, lng: -97.738, name: 'Austin Technology Council', desc: 'Industry partner' },
+    { lat: 30.278, lng: -97.737, name: 'DivInc', desc: 'Diversity accelerator' },
+    { lat: 30.255, lng: -97.763, name: 'Sputnik ATX', desc: 'Co-working partner' }
+  ];
+
+  // Add partner markers (orange)
+  partners.forEach(p => {
+    L.circleMarker([p.lat, p.lng], {
+      radius: 6,
+      color: '#f97316',
+      fillColor: '#f97316',
+      fillOpacity: 0.9
+    }).addTo(mapInstance)
+      .bindPopup(`<b>${p.name}</b><br>${p.desc}`);
+  });
+
+  // Fellow HQ marker (green)
+  L.circleMarker([30.2672, -97.7431], {
+    radius: 8,
+    color: '#059669',
+    fillColor: '#059669',
+    fillOpacity: 0.9
+  }).addTo(mapInstance)
+    .bindPopup('<b>Project IMPACT HQ</b><br>Fellow home base');
+
+  mapInitialized = true;
+}
+
+// Initialize when the Impact section becomes active
+const observer = new MutationObserver(() => {
+  if (document.getElementById('impact').classList.contains('active') && !mapInitialized) {
+    initAustinMap();
+  }
+});
+observer.observe(document.getElementById('impact'), { attributes: true, attributeFilter: ['class'] });
+
+// Also try to init immediately if already active (e.g., on page load if Impact is default)
+if (document.getElementById('impact').classList.contains('active')) {
+  initAustinMap();
+}
 </script>
