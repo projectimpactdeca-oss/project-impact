@@ -177,7 +177,7 @@ async function callOpenRouterAPI(userMessage, history) {
   const response = await axios.post(
     'https://openrouter.ai/api/v1/chat/completions',
     {
-      model: 'meta-llama/llama-3.3-70b-instruct:free',  // free model
+      model: 'arcee-ai/trinity-large-preview:free',  // free model
       messages: messages,
       temperature: 0.7,
       max_tokens: 500
