@@ -1864,29 +1864,124 @@
   </div>
 </div>
 <script>
-    ( () => {
-        const widget = document.querySelector('.chat-widget');
-        const panel = document.getElementById('chatPanel');
-        if (!widget || !panel)
-            return;
-        const closeBtn = document.getElementById('closeChat');
-        const sendBtn = document.getElementById('sendChat');
-        const input = document.getElementById('chatInput');
-        const messages = document.getElementById('chatMessages');
-        widget.onclick = () => panel.style.display = 'flex';
-        closeBtn.onclick = () => panel.style.display = 'none';
-        sendBtn.onclick = send;
-        input.onkeydown = e => e.key === 'Enter' && send();
-        function send() {
-            if (!input.value.trim())
-                return;
-            const m = document.createElement('div');
-            m.className = 'chat-message user';
-            m.textContent = input.value;
-            messages.appendChild(m);
-            input.value = '';
-            messages.scrollTop = messages.scrollHeight;
-        }
+  // --- Keep all your existing functions: navTo, showToast, toggleCheck, updateChart, openPrintModal, closePrintModal, window load ---
+
+  // ===== NEW: Socket.IO Chat Integration =====
+  const socket = io();
+
+  // Generate a random user name (you can change this to a prompt if you prefer)
+  const userName = `Fellow-${Math.floor(Math.random() * 1000)}`;
+  socket.emit('register-user', userName);
+
+  // DOM elements
+  const chatWidget = document.querySelector('.chat-widget');
+  const chatPanel = document.getElementById('chatPanel');
+  const closeChat = document.getElementById('closeChat');
+  const sendBtn = document.getElementById('sendChat');
+  const chatInput = document.getElementById('chatInput');
+  const chatMessages = document.getElementById('chatMessages');
+  const coachStatus = document.getElementById('coachStatus');
+
+  // Open/close panel
+  chatWidget.onclick = () => {
+    chatPanel.style.display = 'flex';
+  };
+  closeChat.onclick = () => {
+    chatPanel.style.display = 'none';
+  };
+
+  // Send message
+  function sendMessage() {
+    const text = chatInput.value.trim();
+    if (!text) return;
+    // Display user message immediately
+    appendMessage('user', text);
+    // Send to server
+    socket.emit('user-message', text);
+    chatInput.value = '';
+  }
+  sendBtn.onclick = sendMessage;
+  chatInput.onkeydown = (e) => {
+    if (e.key === 'Enter') sendMessage();
+  };
+
+  // Append message to chat panel
+  function appendMessage(sender, text) {
+    const msgDiv = document.createElement('div');
+    msgDiv.className = `chat-message ${sender}`;
+    msgDiv.textContent = text;
+    chatMessages.appendChild(msgDiv);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+  }
+
+  // Listen for admin messages
+  socket.on('admin-message', (msg) => {
+    appendMessage('coach', msg.text);
+  });
+
+  // Optional: show when coach is online (admin connects)
+  socket.on('connect', () => {
+    // We'll just assume coach might be online; you can enhance this
+  });
+
+  // You can also listen for a custom event if admin presence is sent
+  // For simplicity, we'll leave the status as is.
+
+  // Keep all your existing code below (navTo, etc.) exactly as they are
+  // ...
+  // (Make sure you copy the rest of your original script here, 
+  //  including navTo, showToast, toggleCheck, updateChart, openPrintModal, closePrintModal, and the window load event.)
+  // I'll include them below for completeness, but you already have them.
+
+  // Your existing functions (unchanged):
+  function navTo(sectionId, element) {
+    if (element) {
+      document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+      element.classList.add('active');
     }
-    )();
+    document.querySelectorAll('.section-view').forEach(sec => sec.classList.remove('active'));
+    document.getElementById(sectionId).classList.add('active');
+  }
+
+  function showToast(message) {
+    const toast = document.getElementById('toast');
+    document.getElementById('toast-msg').innerText = message;
+    toast.classList.add('show');
+    setTimeout( () => toast.classList.remove('show'), 3000);
+  }
+
+  function toggleCheck(el) {
+    const circle = el.querySelector('.check-circle');
+    if (el.classList.contains('completed')) {
+      el.classList.remove('completed');
+      showToast('Task unchecked');
+    } else {
+      el.classList.add('completed');
+      showToast('Task completed!');
+    }
+  }
+
+  function updateChart(val) {
+    const bar = document.getElementById('roi-bar');
+    const height = 30 + (val * 7);
+    bar.style.height = `${Math.min(height, 100)}%`;
+
+    const baseValue = 1.0;
+    const newValue = (baseValue + (val * 0.2)).toFixed(1);
+    document.getElementById('roi-value-display').innerText = `$${newValue}M`;
+  }
+
+  function openPrintModal() {
+    document.getElementById('printModal').classList.add('open');
+    showToast('Generating Documents...');
+  }
+  function closePrintModal() {
+    document.getElementById('printModal').classList.remove('open');
+  }
+
+  window.addEventListener('load', () => {
+    setTimeout( () => {
+      showToast(`Welcome, ${userName}!`);
+    }, 500);
+  });
 </script>
