@@ -9,7 +9,7 @@ const server = http.createServer(app);
 const io = socketIo(server);
 
 const PORT = process.env.PORT || 3000;
-const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY; // Must be set in Render env
+const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY; // Must be set in Render env
 
 // Serve static files
 app.use(express.static(path.join(__dirname, 'public')));
@@ -95,8 +95,7 @@ io.on('connection', (socket) => {
     }
   });
 
-  // ----- AI Assistant -----
-  // User sends a message to AI
+  // ----- AI Assistant (via OpenRouter) -----
   socket.on('user-ai-message', async (text) => {
     const user = users[socket.id];
     if (!user) return;
@@ -109,7 +108,8 @@ io.on('connection', (socket) => {
     };
     user.aiMessages.push(userMsg);
 
-      const reply = await callDeepSeekAPI(text, user.aiMessages);
+    try {
+      const reply = await callOpenRouterAPI(text, user.aiMessages);
       const aiMsg = {
         role: 'assistant',
         text: reply,
@@ -117,6 +117,23 @@ io.on('connection', (socket) => {
       };
       user.aiMessages.push(aiMsg);
       socket.emit('ai-response', aiMsg);
+    } catch (error) {
+      console.error('=== OpenRouter API Error ===');
+      console.error('Message:', error.message);
+      if (error.response) {
+        console.error('Status:', error.response.status);
+        console.error('Data:', error.response.data);
+      } else if (error.request) {
+        console.error('No response received:', error.request);
+      } else {
+        console.error('Error details:', error);
+      }
+      socket.emit('ai-response', {
+        role: 'assistant',
+        text: 'Sorry, I encountered an error. Please try again later.',
+        timestamp: Date.now()
+      });
+    }
   });
 
   // User requests AI chat history
@@ -145,30 +162,33 @@ function getUsersList() {
   return Object.values(users).map(u => ({ id: u.id, name: u.name }));
 }
 
-// Call DeepSeek API
-async function callDeepSeekAPI(userMessage, history) {
-  if (!DEEPSEEK_API_KEY) {
-    throw new Error('DEEPSEEK_API_KEY not set');
+// Call OpenRouter API (Gemma 3 12B free model)
+async function callOpenRouterAPI(userMessage, history) {
+  if (!OPENROUTER_API_KEY) {
+    throw new Error('OPENROUTER_API_KEY not set in environment');
   }
 
-  // Format conversation for DeepSeek (use the full history)
+  // Format conversation for OpenRouter
   const messages = history.map(msg => ({
     role: msg.role,
     content: msg.text
   }));
 
   const response = await axios.post(
-    'https://api.deepseek.com/v1/chat/completions',
+    'https://openrouter.ai/api/v1/chat/completions',
     {
-      model: 'deepseek-chat',  // or 'deepseek-coder' if you prefer
+      model: 'google/gemma-3-12b-it',  // free model
       messages: messages,
       temperature: 0.7,
       max_tokens: 500
     },
     {
       headers: {
-        'Authorization': `Bearer ${DEEPSEEK_API_KEY}`,
-        'Content-Type': 'application/json'
+        'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
+        'Content-Type': 'application/json',
+        // Required by OpenRouter: identify your app
+        'HTTP-Referer': 'https://your-app-name.onrender.com', // replace with your actual URL
+        'X-Title': 'Project IMPACT' // your app name
       }
     }
   );
