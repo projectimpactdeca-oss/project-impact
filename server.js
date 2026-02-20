@@ -177,7 +177,7 @@ async function callOpenRouterAPI(userMessage, history) {
   const response = await axios.post(
     'https://openrouter.ai/api/v1/chat/completions',
     {
-      model: 'google/gemma-3-12b-it',  // free model
+      model: 'meta-llama/llama-3-8b-instruct:free',  // free model
       messages: messages,
       temperature: 0.7,
       max_tokens: 500
@@ -187,7 +187,7 @@ async function callOpenRouterAPI(userMessage, history) {
         'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
         'Content-Type': 'application/json',
         // Required by OpenRouter: identify your app
-        'HTTP-Referer': 'https://your-app-name.onrender.com', // replace with your actual URL
+        'HTTP-Referer': 'https://project-impact.onrender.com', // replace with your actual URL
         'X-Title': 'Project IMPACT' // your app name
       }
     }
