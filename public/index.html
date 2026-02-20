@@ -6,249 +6,238 @@
         <title>CEO-S | Project IMPACT Platform</title>
         <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
         <script src="/socket.io/socket.io.js"></script>
-        
         <style>
+            /* --- 1. CORE VARIABLES & RESET --- */
             :root {
-                --primary: rgb(130, 40, 65); --primary-light: rgba(130, 40, 65, 0.05); --primary-medium: rgba(130, 40, 65, 0.15);
-                --primary-solid-light: #fdf2f4; --primary-dark: rgb(90, 25, 45); --primary-gradient: linear-gradient(135deg, rgb(130, 40, 65) 0%, rgb(80, 20, 35) 100%);
-                --secondary: #059669; --secondary-light: #d1fae5; --secondary-dark: #064e3b; --danger: #ef4444; --danger-light: #fee2e2;
-                --accent: #d97706; --accent-light: #fffbeb; --text-dark: #0f172a; --text-gray: #64748b; --bg-body: #f8fafc; --white: #ffffff;
-                --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05); --shadow-md: 0 4px 6px -1px rgba(130, 40, 65, 0.08), 0 2px 4px -1px rgba(130, 40, 65, 0.04);
-                --shadow-lg: 0 20px 25px -5px rgba(130, 40, 65, 0.1), 0 10px 10px -5px rgba(130, 40, 65, 0.04); --shadow-float: 0 20px 25px -5px rgba(0, 0, 0, 0.2);
+                --primary: rgb(130, 40, 65);
+                --primary-light: rgba(130, 40, 65, 0.05);
+                --primary-medium: rgba(130, 40, 65, 0.15);
+                --primary-solid-light: #fdf2f4;
+                --primary-dark: rgb(90, 25, 45);
+                --primary-gradient: linear-gradient(135deg, rgb(130, 40, 65) 0%, rgb(80, 20, 35) 100%);
+                --secondary: #059669;
+                --secondary-light: #d1fae5;
+                --secondary-dark: #064e3b;
+                --text-dark: #0f172a;
+                --text-gray: #64748b;
+                --bg-body: #f8fafc;
+                --white: #ffffff;
+                --shadow-md: 0 4px 6px -1px rgba(130, 40, 65, 0.08);
+                --shadow-float: 0 20px 25px -5px rgba(0, 0, 0, 0.2);
             }
-            * { margin: 0; padding: 0; box-sizing: border-box; }
-            body { font-family: 'Manrope', sans-serif; background-color: var(--bg-body); background-image: radial-gradient(var(--primary-medium) 1.5px, transparent 1.5px), linear-gradient(to bottom, #fff 0%, var(--bg-body) 100%); background-size: 24px 24px, 100% 100%; background-repeat: repeat, no-repeat; color: var(--text-dark); height: 100vh; overflow: hidden; }
-            .app-layout { display: flex; height: 100vh; }
-            .sidebar { width: 280px; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); border-right: 1px solid #e2e8f0; display: flex; flex-direction: column; flex-shrink: 0; padding: 24px 16px; z-index: 20; box-shadow: 4px 0 24px rgba(0,0,0,0.02); }
-            .logo-area { display: flex; align-items: center; gap: 15px; padding: 0 5px 24px 5px; border-bottom: 1px solid #f1f5f9; margin-bottom: 20px; }
-            .logo-icon { width: 50px; height: 50px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; background: var(--primary-light); border-radius: 8px; color: var(--primary); }
-            .logo-icon svg { width: 100%; height: 100%; object-fit: contain; }
-            .logo-text h1 { font-size: 18px; font-weight: 800; color: var(--text-dark); line-height: 1; margin-bottom: 3px; }
-            .logo-text span { font-size: 10px; font-weight: 700; color: var(--primary); letter-spacing: 1px; text-transform: uppercase; }
-            .nav-menu { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; }
-            .nav-item { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 10px; color: var(--text-gray); font-weight: 600; font-size: 14px; cursor: pointer; transition: all 0.2s ease; border: 1px solid transparent; }
-            .nav-item:hover { background: var(--white); color: var(--primary); box-shadow: var(--shadow-sm); transform: translateX(4px); }
-            .nav-item.active { background: var(--primary); color: white; box-shadow: 0 4px 12px rgba(130, 40, 65, 0.3); }
-            .nav-item.active svg { stroke: white; }
-            .nav-item svg { width: 20px; height: 20px; stroke-width: 2; transition: all 0.2s; }
-            .nav-badge { margin-left: auto; background: var(--accent); color: white; font-size: 10px; padding: 2px 6px; border-radius: 10px; font-weight: 800; }
-            .user-profile { margin-top: auto; padding-top: 20px; border-top: 1px solid #f1f5f9; display: flex; align-items: center; gap: 12px; cursor: pointer; }
-            .avatar { width: 40px; height: 40px; border-radius: 10px; background: var(--primary-dark); color: white; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 14px; box-shadow: var(--shadow-md); position: relative; }
-            .avatar::after { content: ''; position: absolute; bottom: -2px; right: -2px; width: 10px; height: 10px; background: var(--secondary); border: 2px solid white; border-radius: 50%; }
-            .main-content { flex: 1; overflow-y: auto; padding: 32px 40px; position: relative; }
-            .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
-            .page-title h2 { font-size: 26px; font-weight: 800; color: var(--text-dark); margin-bottom: 4px; letter-spacing: -0.5px; }
-            .page-title p { color: var(--text-gray); font-size: 13px; font-weight: 500; display: flex; align-items: center; gap: 6px; }
-            .status-badge { background: var(--secondary-light); color: var(--secondary-dark); padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 700; text-transform: uppercase; display: inline-flex; align-items: center; gap: 6px; }
-            .status-dot { width: 8px; height: 8px; background: currentColor; border-radius: 50%; animation: pulse 2s infinite; }
-            .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-            .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
-            .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
-            .grid-2-1 { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; }
-            .grid-1-3 { display: grid; grid-template-columns: 1fr 3fr; gap: 20px; }
-            .card { background: rgba(255, 255, 255, 0.95); border-radius: 16px; padding: 24px; box-shadow: var(--shadow-md); border: 1px solid rgba(255,255,255,0.6); transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); position: relative; overflow: hidden; display: flex; flex-direction: column; }
-            .card:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); border-color: var(--primary-light); background: #fff; }
-            .card.info-card { background: var(--primary-solid-light); border: 1px solid var(--primary-medium); }
-            .card.info-card h4 { color: var(--primary); font-size: 14px; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; font-weight: 800; }
-            .card.info-card p { font-size: 12px; color: var(--text-dark); opacity: 0.8; line-height: 1.6; }
-            .card.info-card ul { margin-top: 5px; padding-left: 20px; font-size: 12px; color: var(--text-dark); opacity: 0.8; }
-            .action-btn { background: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: 700; font-size: 13px; cursor: pointer; box-shadow: 0 4px 10px rgba(130, 40, 65, 0.2); transition: all 0.2s; display: inline-flex; align-items: center; gap: 8px; }
-            .action-btn:hover { background: var(--primary-dark); transform: scale(1.02); }
-            .action-btn.secondary { background: white; color: var(--text-dark); border: 1px solid #cbd5e1; box-shadow: var(--shadow-sm); }
-            .action-btn.secondary:hover { background: #f1f5f9; border-color: var(--text-gray); }
-            .form-group { margin-bottom: 15px; }
-            label { display: block; font-size: 12px; font-weight: 700; color: var(--text-dark); margin-bottom: 6px; text-transform: uppercase; }
-            input, select, textarea { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; font-family: inherit; font-size: 14px; transition: all 0.2s; }
-            input:focus, select:focus, textarea:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-light); }
-            @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
-            @keyframes drawLine { from { stroke-dashoffset: 1000; } to { stroke-dashoffset: 0; } }
-            .section-view { display: none; animation: fadeIn 0.4s ease-out; }
-            .section-view.active { display: block; }
-            @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-            .radar-svg { width: 100%; height: 200px; overflow: visible; }
-            .radar-data { fill: rgba(130,40,65,0.15); stroke: var(--primary); stroke-width: 2; }
-            .radar-point { fill: white; stroke: var(--primary); stroke-width: 2; r: 3; }
-            .gauge-bg { fill: none; stroke: rgba(255,255,255,0.2); stroke-width: 15; stroke-linecap: round; }
-            .gauge-value { fill: none; stroke: #fff; stroke-width: 15; stroke-linecap: round; stroke-dasharray: 251 251; stroke-dashoffset: 80; animation: fillGauge 1.5s ease-out forwards; }
-            @keyframes fillGauge { from { stroke-dashoffset: 251; } to { stroke-dashoffset: 80; } }
-            .checklist-item { display: flex; align-items: center; padding: 16px; background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; margin-bottom: 12px; transition: all 0.2s; cursor: pointer; }
-            .checklist-item:hover { border-color: var(--primary); transform: translateX(4px); box-shadow: var(--shadow-sm); }
-            .checklist-item.completed .check-circle { background: var(--secondary); border-color: var(--secondary); }
-            .checklist-item.completed .check-circle::after { content: '✓'; color: white; font-size: 12px; font-weight: 800; }
-            .check-circle { width: 24px; height: 24px; border: 2px solid #cbd5e1; border-radius: 50%; margin-right: 16px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-            .chat-widget { position: fixed; bottom: 30px; right: 30px; width: 60px; height: 60px; border-radius: 50%; background: var(--primary-gradient); color: white; display: flex; align-items: center; justify-content: center; box-shadow: var(--shadow-float); cursor: pointer; transition: transform 0.3s; z-index: 100; }
-            .chat-widget:hover { transform: scale(1.1) rotate(5deg); }
-            .toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(100px); background: var(--text-dark); color: white; padding: 12px 24px; border-radius: 30px; display: flex; align-items: center; gap: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); opacity: 0; transition: all 0.4s; z-index: 200; font-weight: 600; }
-            .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
-            .print-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 5000; display: none; justify-content: center; align-items: flex-start; overflow-y: auto; padding: 40px; backdrop-filter: blur(5px); }
-            .print-modal.open { display: flex; animation: fadeIn 0.3s ease-out; }
-            .print-content { display: flex; flex-direction: column; gap: 40px; width: 100%; max-width: 900px; }
-            .print-header-actions { position: sticky; top: 20px; z-index: 5001; display: flex; justify-content: center; gap: 20px; background: white; padding: 15px 30px; border-radius: 50px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); width: fit-content; margin: 0 auto; }
-            .a4-page { width: 210mm; min-height: 297mm; background: white; padding: 25mm; margin: 0 auto; box-shadow: 0 0 50px rgba(0,0,0,0.5); font-family: 'Times New Roman', serif; color: #000; position: relative; }
-            .a4-header { border-bottom: 2px solid var(--primary); padding-bottom: 20px; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center; }
-            .a4-logo { font-size: 24px; font-weight: bold; font-family: 'Manrope', sans-serif; color: var(--primary); }
-            .a4-title { font-size: 24px; font-weight: bold; margin-bottom: 20px; font-family: 'Manrope', sans-serif; color: #000; text-decoration: underline; }
-            .a4-row { display: flex; justify-content: space-between; border-bottom: 1px solid #eee; padding: 12px 0; }
-            .a4-check-row { display: flex; align-items: center; gap: 15px; margin-bottom: 15px; font-size: 14px; }
-            .a4-box { width: 18px; height: 18px; border: 1px solid #000; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold; }
-            .a4-table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 14px; }
-            .a4-table th, .a4-table td { border: 1px solid #000; padding: 12px; text-align: left; }
-            .a4-table th { background: #f0f0f0; font-weight: bold; }
-            .mock-data { font-family: 'Courier New', monospace; color: var(--primary); font-weight: bold; }
-            @media print { body * { visibility: hidden; } .print-modal, .print-modal * { visibility: visible; } .print-modal { position: absolute; left: 0; top: 0; background: white; padding: 0; display: block; width: 100%; height: auto; } .print-header-actions { display: none; } .a4-page { box-shadow: none; margin: 0; page-break-after: always; width: 100%; border: none; } }
-            @media (max-width: 768px) { .app-layout { flex-direction: column; overflow: auto; } .sidebar { width: 100%; border-right: none; border-bottom: 1px solid #e2e8f0; } .nav-menu { flex-direction: row; padding-bottom: 10px; gap: 10px; } .grid-2, .grid-3, .grid-4, .grid-2-1, .grid-1-3 { grid-template-columns: 1fr; } body { overflow: auto; } }
 
-            /* CHAT PANEL STYLES */
-            .chat-panel { position: fixed; bottom: 110px; right: 30px; width: 340px; height: 440px; background: #fff; border-radius: 16px; display: none; flex-direction: column; box-shadow: 0 20px 30px rgba(130,40,65,.25); z-index: 120; }
-            .chat-header { padding: 14px; background: linear-gradient(135deg,rgb(130,40,65),rgb(80,20,35)); color: #fff; display: flex; justify-content: space-between; border-radius: 16px 16px 0 0; }
-            .chat-header button { background: none; border: none; color: white; cursor: pointer; font-size: 16px; }
-            .chat-messages { flex: 1; padding: 14px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px;}
-            .chat-message { padding: 10px 12px; border-radius: 12px; max-width: 80%; font-size: 14px; }
-            .chat-message.coach { background: rgba(130,40,65,.08); align-self: flex-start; }
-            .chat-message.user { background: #d1fae5; align-self: flex-end; }
-            .chat-input { display: flex; gap: 8px; padding: 12px; border-top: 1px solid #e5e7eb; }
+            * { margin: 0; padding: 0; box-sizing: border-box; }
+
+            body {
+                font-family: 'Manrope', sans-serif;
+                background-color: var(--bg-body);
+                background-image: radial-gradient(var(--primary-medium) 1.5px, transparent 1.5px);
+                background-size: 24px 24px;
+                color: var(--text-dark);
+                height: 100vh;
+                overflow: hidden;
+            }
+
+            /* --- 2. LAYOUT --- */
+            .app-layout { display: flex; height: 100vh; }
+
+            .sidebar {
+                width: 280px;
+                background: rgba(255, 255, 255, 0.95);
+                backdrop-filter: blur(10px);
+                border-right: 1px solid #e2e8f0;
+                display: flex;
+                flex-direction: column;
+                padding: 24px 16px;
+                z-index: 20;
+            }
+
+            .logo-area {
+                display: flex;
+                align-items: center;
+                gap: 15px;
+                padding-bottom: 24px;
+                border-bottom: 1px solid #f1f5f9;
+                margin-bottom: 20px;
+            }
+
+            .nav-menu { flex: 1; display: flex; flex-direction: column; gap: 6px; }
+
+            .nav-item {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                padding: 12px 16px;
+                border-radius: 10px;
+                color: var(--text-gray);
+                font-weight: 600;
+                cursor: pointer;
+                transition: 0.2s;
+            }
+
+            .nav-item.active { background: var(--primary); color: white; }
+
+            /* Admin Visibility Logic */
+            .admin-feature { display: none; }
+            body.admin-mode .admin-feature { display: block; }
+
+            .user-profile {
+                margin-top: auto;
+                padding-top: 20px;
+                border-top: 1px solid #f1f5f9;
+            }
+
+            .role-badge {
+                font-size: 10px;
+                padding: 2px 8px;
+                border-radius: 4px;
+                background: #e2e8f0;
+                font-weight: 700;
+                margin-top: 5px;
+                display: inline-block;
+            }
+
+            body.admin-mode .role-badge { background: #fee2e2; color: #b91c1c; }
+
+            .toggle-btn {
+                width: 100%; margin-top: 10px; padding: 6px; 
+                background: #f1f5f9; border: 1px solid #cbd5e1;
+                border-radius: 6px; cursor: pointer; font-size: 11px; font-weight: 700;
+            }
+
+            /* --- 3. CHAT UI --- */
+            .chat-widget {
+                position: fixed; bottom: 30px; right: 30px;
+                width: 60px; height: 60px; border-radius: 50%;
+                background: var(--primary-gradient); color: white;
+                display: flex; align-items: center; justify-content: center;
+                cursor: pointer; box-shadow: var(--shadow-float); z-index: 1000;
+            }
+
+            .chat-panel {
+                position: fixed; bottom: 100px; right: 30px;
+                width: 350px; height: 450px; background: white;
+                border-radius: 16px; box-shadow: var(--shadow-float);
+                display: none; flex-direction: column; overflow: hidden; z-index: 1000;
+            }
+
+            .chat-header { background: var(--primary); color: white; padding: 15px; display: flex; justify-content: space-between; }
+            .chat-messages { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
+            .msg { padding: 8px 12px; border-radius: 12px; max-width: 80%; font-size: 14px; }
+            .msg.coach { background: #f1f5f9; align-self: flex-start; }
+            .msg.user { background: var(--primary); color: white; align-self: flex-end; }
+            .chat-input { padding: 15px; border-top: 1px solid #eee; display: flex; gap: 8px; }
+            .chat-input input { flex: 1; padding: 8px; border: 1px solid #ddd; border-radius: 8px; outline: none; }
+            .chat-input button { background: var(--primary); color: white; border: none; padding: 8px 15px; border-radius: 8px; cursor: pointer; }
+
+            /* Rest of your Dashboard styles... */
+            .main-content { flex: 1; overflow-y: auto; padding: 32px 40px; }
+            .card { background: white; border-radius: 16px; padding: 24px; box-shadow: var(--shadow-md); margin-bottom: 20px; }
         </style>
     </head>
     <body>
         <div class="app-layout">
             <nav class="sidebar">
                 <div class="logo-area">
-                    <div class="logo-text">
-                        <h1>PROJECT<br>IMPACT</h1>
-                        <span>CEO-S INITIATIVE</span>
+                    <div class="avatar">C</div>
+                    <div>
+                        <h2 style="font-size: 16px;">CEO-S Platform</h2>
+                        <span id="roleLabel" class="role-badge">USER MODE</span>
                     </div>
                 </div>
+
                 <div class="nav-menu">
-                    <div class="nav-item active" onclick="navTo('dashboard', this)">Dashboard</div>
-                    <div class="nav-item" onclick="navTo('kit', this)">Pro-Bono Kit <span class="nav-badge">Kit</span></div>
-                    <div class="nav-item" onclick="navTo('portfolio', this)">My Portfolio</div>
-                    <div class="nav-item" onclick="navTo('onboarding', this)">Next Steps</div>
-                    <div class="nav-item" onclick="navTo('apply', this)">Apply Now</div>
-                    <div class="nav-item" onclick="navTo('events', this)">Events</div>
-                    <div class="nav-item" onclick="navTo('resources', this)">Resources</div>
-                    <div class="nav-item" onclick="navTo('impact', this)">Impact ROI</div>
-                    <div class="nav-item" onclick="navTo('live', this)">Live Feed</div>
+                    <div class="nav-item active">Dashboard</div>
+                    <div class="nav-item">Portfolio</div>
+                    <div class="nav-item admin-feature" style="color: var(--primary);">Admin Controls</div>
                 </div>
+
                 <div class="user-profile">
-                    <div class="avatar">DA</div>
-                    <div style="font-size: 13px; line-height: 1.3;">
-                        <div style="font-weight: 700; color: var(--text-dark);">David Andrews</div>
-                        <div style="color: var(--text-gray); font-size: 11px;">Fellow • Cohort '26</div>
-                    </div>
+                    <p style="font-weight: 700; font-size: 14px;">Jane Doe</p>
+                    <button class="toggle-btn" onclick="toggleMode()">Check/Switch to Admin</button>
                 </div>
             </nav>
 
             <main class="main-content">
-                <section id="dashboard" class="section-view active">
-                    <div class="header">
-                        <div class="page-title">
-                            <h2>Executive Dashboard</h2>
-                            <p>Project IMPACT Overview</p>
-                        </div>
-                    </div>
-                    <div class="card" style="height:300px; display:flex; align-items:center; justify-content:center; color: var(--text-gray); font-size: 24px;">
-                        Welcome to Project IMPACT!
-                    </div>
-                </section>
-                </main>
+                <header style="margin-bottom: 20px;">
+                    <h1>Welcome, Project Lead</h1>
+                    <p>Track your project IMPACT progress here.</p>
+                </header>
+
+                <div class="card">
+                    <h3>Project Status</h3>
+                    <p>Current Milestone: 85% Complete</p>
+                </div>
+
+                <div class="card admin-feature" style="background: #fffaf0; border: 1px solid #fbd38d;">
+                    <h3 style="color: #c05621;">Admin Analytics</h3>
+                    <p>View sensitive user data and backend logs here.</p>
+                </div>
+            </main>
         </div>
 
-        <div class="chat-widget">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-            </svg>
-        </div>
-
+        <div class="chat-widget" onclick="toggleChat()">💬</div>
         <div class="chat-panel" id="chatPanel">
             <div class="chat-header">
                 <strong>Executive Coach</strong>
-                <button id="closeChat">✕</button>
+                <span onclick="toggleChat()" style="cursor:pointer">✕</span>
             </div>
             <div class="chat-messages" id="chatMessages">
-                <div class="chat-message coach">Hi David — how can I help you today?</div>
+                <div class="msg coach">Hi Jane! How can I help you today?</div>
             </div>
             <div class="chat-input">
-                <input id="chatInput" placeholder="Type message…"/>
-                <button id="sendChat" class="action-btn">Send</button>
+                <input type="text" id="chatInput" placeholder="Type a message...">
+                <button id="sendBtn">Send</button>
             </div>
-        </div>
-
-        <div id="toast" class="toast">
-            <span id="toast-msg">Success</span>
         </div>
 
         <script>
-            function navTo(sectionId, element) {
-                if (element) {
-                    document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-                    element.classList.add('active');
-                }
-                document.querySelectorAll('.section-view').forEach(sec => sec.classList.remove('active'));
-                document.getElementById(sectionId).classList.add('active');
-            }
+            const socket = io();
+            const input = document.getElementById('chatInput');
+            const sendBtn = document.getElementById('sendBtn');
+            const messages = document.getElementById('chatMessages');
 
-            function showToast(message) {
-                const toast = document.getElementById('toast');
-                document.getElementById('toast-msg').innerText = message;
-                toast.classList.add('show');
-                setTimeout(() => toast.classList.remove('show'), 3000);
-            }
-
-            // --- REAL-TIME CHAT LOGIC (SOCKET.IO) ---
-            (() => {
-                const widget = document.querySelector('.chat-widget');
-                const panel = document.getElementById('chatPanel');
-                if (!widget || !panel) return;
-                
-                const closeBtn = document.getElementById('closeChat');
-                const sendBtn = document.getElementById('sendChat');
-                const input = document.getElementById('chatInput');
-                const messages = document.getElementById('chatMessages');
-
-                // 1. Initialize Socket Connection
-                const socket = io();
-
-                // 2. Identify the User to the Server
-                const userProfile = { name: "David Andrews" };
-                socket.emit('register-user', userProfile);
-
-                // UI Event Listeners
-                widget.onclick = () => panel.style.display = 'flex';
-                closeBtn.onclick = () => panel.style.display = 'none';
-                sendBtn.onclick = send;
-                input.onkeydown = e => e.key === 'Enter' && send();
-
-                // 3. Sending Messages
-                function send() {
-                    const text = input.value.trim();
-                    if (!text) return;
-                    
-                    // Display on User's Screen
-                    const m = document.createElement('div');
-                    m.className = 'chat-message user';
-                    m.textContent = text;
-                    messages.appendChild(m);
-                    
-                    // Send to Server
-                    socket.emit('user-message', text);
-
+            // 1. Sending messages
+            function send() {
+                const text = input.value.trim();
+                if(text) {
+                    // Send to server
+                    socket.emit('clientMessage', { text: text, user: 'Jane' });
                     input.value = '';
-                    messages.scrollTop = messages.scrollHeight;
                 }
+            }
 
-                // 4. Receiving Replies from Coach
-                socket.on('coach-message', (msg) => {
-                    const m = document.createElement('div');
-                    m.className = 'chat-message coach';
-                    m.textContent = msg;
-                    messages.appendChild(m);
-                    messages.scrollTop = messages.scrollHeight;
-                    
-                    // Auto-open panel & notify
-                    panel.style.display = 'flex';
-                    showToast('New message from Coach!');
-                });
-            })();
+            sendBtn.onclick = send;
+            input.onkeydown = (e) => e.key === 'Enter' && send();
+
+            // 2. Receiving messages
+            socket.on('clientMessage', (data) => {
+                const div = document.createElement('div');
+                div.className = 'msg user';
+                div.innerText = data.text;
+                messages.appendChild(div);
+                messages.scrollTop = messages.scrollHeight;
+            });
+
+            socket.on('coachMessage', (data) => {
+                const div = document.createElement('div');
+                div.className = 'msg coach';
+                div.innerText = data.text;
+                messages.appendChild(div);
+                messages.scrollTop = messages.scrollHeight;
+            });
+
+            // UI Functions
+            function toggleChat() {
+                const panel = document.getElementById('chatPanel');
+                panel.style.display = (panel.style.display === 'flex') ? 'none' : 'flex';
+            }
+
+            function toggleMode() {
+                document.body.classList.toggle('admin-mode');
+                const label = document.getElementById('roleLabel');
+                label.innerText = document.body.classList.contains('admin-mode') ? "ADMIN MODE" : "USER MODE";
+            }
         </script>
     </body>
 </html>
