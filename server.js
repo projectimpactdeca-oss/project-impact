@@ -109,7 +109,6 @@ io.on('connection', (socket) => {
     };
     user.aiMessages.push(userMsg);
 
-    try {
       const reply = await callDeepSeekAPI(text, user.aiMessages);
       const aiMsg = {
         role: 'assistant',
@@ -118,14 +117,6 @@ io.on('connection', (socket) => {
       };
       user.aiMessages.push(aiMsg);
       socket.emit('ai-response', aiMsg);
-    } catch (error) {
-      console.error('DeepSeek API error:', error.message);
-      socket.emit('ai-response', {
-        role: 'assistant',
-        text: 'Sorry, I encountered an error. Please try again later.',
-        timestamp: Date.now()
-      });
-    }
   });
 
   // User requests AI chat history
