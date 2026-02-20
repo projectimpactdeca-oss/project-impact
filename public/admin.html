@@ -2,126 +2,62 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Coach Dashboard | Project IMPACT</title>
-    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;700;800&display=swap" rel="stylesheet">
     <script src="/socket.io/socket.io.js"></script>
     <style>
-        body { font-family: 'Manrope', sans-serif; margin: 0; height: 100vh; display: flex; background: #f8fafc; color: #0f172a; }
-        .sidebar { width: 300px; background: white; border-right: 1px solid #e2e8f0; display: flex; flex-direction: column; }
-        .sidebar-header { padding: 20px; background: rgb(130, 40, 65); color: white; font-weight: 800; font-size: 18px; }
-        .user-list { list-style: none; padding: 0; margin: 0; overflow-y: auto; }
-        .user-item { padding: 15px 20px; border-bottom: 1px solid #f1f5f9; cursor: pointer; display: flex; justify-content: space-between; transition: background 0.2s; }
-        .user-item:hover { background: #f8fafc; }
-        .user-item.active { background: #fdf2f4; border-left: 4px solid rgb(130, 40, 65); }
-        .unread-badge { background: #ef4444; color: white; border-radius: 10px; padding: 2px 8px; font-size: 12px; font-weight: bold; display: none; }
-        .chat-container { flex: 1; display: flex; flex-direction: column; }
-        .chat-header { padding: 20px; background: white; border-bottom: 1px solid #e2e8f0; font-size: 18px; font-weight: bold; }
-        .chat-messages { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
-        .message { max-width: 60%; padding: 12px 16px; border-radius: 12px; font-size: 14px; }
-        .message.coach { background: rgb(130, 40, 65); color: white; align-self: flex-end; }
-        .message.user { background: #e2e8f0; align-self: flex-start; }
-        .chat-input-area { padding: 20px; background: white; border-top: 1px solid #e2e8f0; display: flex; gap: 10px; }
-        .chat-input-area input { flex: 1; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-family: inherit; }
-        .chat-input-area button { background: rgb(130, 40, 65); color: white; border: none; padding: 0 24px; border-radius: 8px; font-weight: bold; cursor: pointer; }
-        .empty-state { flex: 1; display: flex; align-items: center; justify-content: center; color: #64748b; font-size: 18px; }
+        body { font-family: 'Manrope', sans-serif; background: #1a202c; color: white; display: flex; height: 100vh; margin: 0; }
+        .sidebar { width: 300px; background: #2d3748; padding: 20px; border-right: 1px solid #4a5568; }
+        .chat-area { flex: 1; display: flex; flex-direction: column; background: #edf2f7; color: #2d3748; }
+        .messages { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
+        .msg { padding: 10px; border-radius: 8px; max-width: 70%; }
+        .msg.client { background: white; align-self: flex-start; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .msg.coach { background: #822841; color: white; align-self: flex-end; }
+        .input-box { padding: 20px; background: white; border-top: 1px solid #cbd5e1; display: flex; gap: 10px; }
+        input { flex: 1; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; }
+        button { background: #822841; color: white; border: none; padding: 0 20px; border-radius: 8px; cursor: pointer; }
     </style>
 </head>
 <body>
     <div class="sidebar">
-        <div class="sidebar-header">Active Fellows Online</div>
-        <ul class="user-list" id="userList"></ul>
+        <h2>Coach Panel</h2>
+        <p>Active Users: <span style="color: #48bb78;">Jane Doe</span></p>
     </div>
-
-    <div class="chat-container" id="chatContainer" style="display: none;">
-        <div class="chat-header" id="chatHeader">Chatting with...</div>
-        <div class="chat-messages" id="chatMessages"></div>
-        <div class="chat-input-area">
-            <input type="text" id="chatInput" placeholder="Reply to Fellow...">
-            <button id="sendBtn">Send</button>
+    <div class="chat-area">
+        <div class="messages" id="msgs"></div>
+        <div class="input-box">
+            <input type="text" id="reply" placeholder="Reply to Jane...">
+            <button onclick="sendReply()">Send</button>
         </div>
     </div>
-    
-    <div class="empty-state" id="emptyState">Select a fellow from the sidebar to start coaching.</div>
 
     <script>
         const socket = io();
-        const userListEl = document.getElementById('userList');
-        const chatContainer = document.getElementById('chatContainer');
-        const emptyState = document.getElementById('emptyState');
-        const chatHeader = document.getElementById('chatHeader');
-        const chatMessages = document.getElementById('chatMessages');
-        const chatInput = document.getElementById('chatInput');
-        const sendBtn = document.getElementById('sendBtn');
+        const msgs = document.getElementById('msgs');
+        const reply = document.getElementById('reply');
 
-        let activeUsers = {};
-        let selectedUserId = null;
-        const chatHistory = {};
-
-        socket.on('update-users', (users) => {
-            activeUsers = users;
-            renderUserList();
-            if (selectedUserId && !activeUsers[selectedUserId]) {
-                selectedUserId = null;
-                chatContainer.style.display = 'none';
-                emptyState.style.display = 'flex';
-            }
-        });
-
-        socket.on('receive-user-message', (data) => {
-            if (!chatHistory[data.id]) chatHistory[data.id] = [];
-            chatHistory[data.id].push({ sender: 'user', msg: data.msg });
-
-            if (selectedUserId === data.id) {
-                renderMessage('user', data.msg);
-            } else {
-                const userLi = document.getElementById(`user-${data.id}`);
-                if (userLi) userLi.querySelector('.unread-badge').style.display = 'inline-block';
-            }
-        });
-
-        function sendMessage() {
-            const text = chatInput.value.trim();
-            if (!text || !selectedUserId) return;
-            socket.emit('admin-message', { userId: selectedUserId, msg: text });
-            chatHistory[selectedUserId].push({ sender: 'coach', msg: text });
-            renderMessage('coach', text);
-            chatInput.value = '';
-        }
-
-        sendBtn.onclick = sendMessage;
-        chatInput.onkeydown = e => e.key === 'Enter' && sendMessage();
-
-        function renderUserList() {
-            userListEl.innerHTML = '';
-            for (const [id, user] of Object.entries(activeUsers)) {
-                const li = document.createElement('li');
-                li.id = `user-${id}`;
-                li.className = `user-item ${selectedUserId === id ? 'active' : ''}`;
-                li.innerHTML = `<span>${user.name}</span><span class="unread-badge">New</span>`;
-                li.onclick = () => selectUser(id, user.name);
-                userListEl.appendChild(li);
+        function sendReply() {
+            const text = reply.value.trim();
+            if(text) {
+                socket.emit('coachMessage', { text: text });
+                reply.value = '';
             }
         }
 
-        function selectUser(id, name) {
-            selectedUserId = id;
-            emptyState.style.display = 'none';
-            chatContainer.style.display = 'flex';
-            chatHeader.innerText = `Chatting with ${name}`;
-            renderUserList();
-            chatMessages.innerHTML = '';
-            const history = chatHistory[id] || [];
-            history.forEach(item => renderMessage(item.sender, item.msg));
-        }
-
-        function renderMessage(sender, text) {
+        socket.on('clientMessage', (data) => {
             const div = document.createElement('div');
-            div.className = `message ${sender}`;
-            div.innerText = text;
-            chatMessages.appendChild(div);
-            chatMessages.scrollTop = chatMessages.scrollHeight;
-        }
+            div.className = 'msg client';
+            div.innerHTML = `<strong>${data.user}:</strong> ${data.text}`;
+            msgs.appendChild(div);
+            msgs.scrollTop = msgs.scrollHeight;
+        });
+
+        socket.on('coachMessage', (data) => {
+            const div = document.createElement('div');
+            div.className = 'msg coach';
+            div.innerText = data.text;
+            msgs.appendChild(div);
+            msgs.scrollTop = msgs.scrollHeight;
+        });
     </script>
 </body>
 </html>
