@@ -1871,10 +1871,32 @@
         padding: 12px;
         border-top: 1px solid #e5e7eb
     }
-    .ai-panel {
+    /* AI Assistant Widget */
+.ai-widget {
+    position: fixed;
+    bottom: 30px;
+    right: 100px;          /* 70px left of coach widget (which is at 30px) */
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #2563eb, #1e3a8a);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: var(--shadow-float);
+    cursor: pointer;
+    transition: transform 0.3s;
+    z-index: 100;
+}
+.ai-widget:hover {
+    transform: scale(1.1) rotate(5deg);
+}
+/* AI Panel */
+.ai-panel {
     position: fixed;
     bottom: 110px;
-    right: 100px;  /* aligns under the AI widget */
+    right: 100px;          /* same horizontal alignment as widget */
     width: 340px;
     height: 440px;
     background: #fff;
@@ -1885,11 +1907,12 @@
     z-index: 120;
 }
 .ai-panel .chat-header {
-    background: linear-gradient(135deg,#2563eb,#1e3a8a);
+    background: linear-gradient(135deg, #2563eb, #1e3a8a);
 }
 .chat-message.ai {
     background: rgba(37,99,235,0.08);
 }
+    
 </style>
 <div class="chat-panel" id="chatPanel" style="display: none;">
   <div class="chat-header">
@@ -1903,6 +1926,20 @@
     <input id="chatInput" placeholder="Type your message..." />
     <button id="sendChat">Send</button>
   </div>
+</div>
+<!-- AI Chat Panel -->
+<div class="ai-panel" id="aiPanel" style="display: none;">
+    <div class="chat-header">
+        <strong>Jewel AI</strong>
+        <button id="closeAIChat">✕</button>
+    </div>
+    <div class="chat-messages" id="aiMessages">
+        <div class="chat-message ai">Hi! I'm Jewel AI. Ask me anything about leadership, CSR, or your fellowship.</div>
+    </div>
+    <div class="chat-input">
+        <input id="aiInput" placeholder="Ask a question..." />
+        <button id="sendAI">Send</button>
+    </div>
 </div>
 <script>
   // --- Keep all your existing functions: navTo, showToast, toggleCheck, updateChart, openPrintModal, closePrintModal, window load ---
@@ -2053,8 +2090,8 @@ function sendAIMessage() {
     socket.emit('user-ai-message', text);
     aiInput.value = '';
 }
-sendAI.onclick = sendAIMessage;
-aiInput.onkeydown = (e) => {
+if (sendAI) sendAI.onclick = sendAIMessage;
+if (aiInput) aiInput.onkeydown = (e) => {
     if (e.key === 'Enter') sendAIMessage();
 };
 
