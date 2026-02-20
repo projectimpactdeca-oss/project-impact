@@ -1,63 +1,309 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Coach Dashboard | Project IMPACT</title>
-    <script src="/socket.io/socket.io.js"></script>
-    <style>
-        body { font-family: 'Manrope', sans-serif; background: #1a202c; color: white; display: flex; height: 100vh; margin: 0; }
-        .sidebar { width: 300px; background: #2d3748; padding: 20px; border-right: 1px solid #4a5568; }
-        .chat-area { flex: 1; display: flex; flex-direction: column; background: #edf2f7; color: #2d3748; }
-        .messages { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
-        .msg { padding: 10px; border-radius: 8px; max-width: 70%; }
-        .msg.client { background: white; align-self: flex-start; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        .msg.coach { background: #822841; color: white; align-self: flex-end; }
-        .input-box { padding: 20px; background: white; border-top: 1px solid #cbd5e1; display: flex; gap: 10px; }
-        input { flex: 1; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; }
-        button { background: #822841; color: white; border: none; padding: 0 20px; border-radius: 8px; cursor: pointer; }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Coach Portal – Project IMPACT</title>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <script src="/socket.io/socket.io.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: 'Manrope', sans-serif;
+      background: #f8fafc;
+      height: 100vh;
+      display: flex;
+      color: #0f172a;
+    }
+    .users-panel {
+      width: 280px;
+      background: white;
+      border-right: 1px solid #e2e8f0;
+      display: flex;
+      flex-direction: column;
+    }
+    .users-header {
+      padding: 24px 16px;
+      border-bottom: 1px solid #f1f5f9;
+    }
+    .users-header h2 {
+      font-size: 18px;
+      font-weight: 800;
+      color: #822841;
+    }
+    .users-header p {
+      font-size: 12px;
+      color: #64748b;
+    }
+    .user-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+    }
+    .user-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background 0.2s;
+      margin-bottom: 4px;
+    }
+    .user-item:hover {
+      background: #f1f5f9;
+    }
+    .user-item.selected {
+      background: #822841;
+      color: white;
+    }
+    .user-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      background: #822841;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 12px;
+    }
+    .user-item.selected .user-avatar {
+      background: white;
+      color: #822841;
+    }
+    .user-name {
+      font-weight: 600;
+      font-size: 14px;
+    }
+    .chat-panel {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      background: white;
+    }
+    .chat-header {
+      padding: 20px 24px;
+      border-bottom: 1px solid #e2e8f0;
+      background: white;
+    }
+    .chat-header h3 {
+      font-size: 18px;
+      font-weight: 700;
+    }
+    .chat-header p {
+      font-size: 12px;
+      color: #64748b;
+    }
+    .chat-messages {
+      flex: 1;
+      padding: 24px;
+      overflow-y: auto;
+      background: #f8fafc;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .message {
+      max-width: 70%;
+      padding: 12px 16px;
+      border-radius: 18px;
+      font-size: 14px;
+      line-height: 1.4;
+      word-wrap: break-word;
+    }
+    .message.user {
+      align-self: flex-start;
+      background: white;
+      border: 1px solid #e2e8f0;
+      border-bottom-left-radius: 4px;
+    }
+    .message.admin {
+      align-self: flex-end;
+      background: #822841;
+      color: white;
+      border-bottom-right-radius: 4px;
+    }
+    .message .timestamp {
+      font-size: 10px;
+      opacity: 0.6;
+      margin-top: 4px;
+    }
+    .chat-input-area {
+      padding: 20px 24px;
+      border-top: 1px solid #e2e8f0;
+      display: flex;
+      gap: 12px;
+    }
+    .chat-input-area input {
+      flex: 1;
+      padding: 12px 16px;
+      border: 1px solid #cbd5e1;
+      border-radius: 30px;
+      font-family: inherit;
+      font-size: 14px;
+    }
+    .chat-input-area input:focus {
+      outline: none;
+      border-color: #822841;
+      box-shadow: 0 0 0 3px rgba(130,40,65,0.1);
+    }
+    .chat-input-area button {
+      background: #822841;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 30px;
+      font-weight: 700;
+      font-size: 14px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .chat-input-area button:hover {
+      background: #501423;
+    }
+    .empty-state {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      color: #94a3b8;
+      font-size: 14px;
+      text-align: center;
+    }
+  </style>
 </head>
 <body>
-    <div class="sidebar">
-        <h2>Coach Panel</h2>
-        <p>Active Users: <span style="color: #48bb78;">Jane Doe</span></p>
+  <div class="users-panel">
+    <div class="users-header">
+      <h2>Active Fellows</h2>
+      <p>Click to start a conversation</p>
     </div>
-    <div class="chat-area">
-        <div class="messages" id="msgs"></div>
-        <div class="input-box">
-            <input type="text" id="reply" placeholder="Reply to Jane...">
-            <button onclick="sendReply()">Send</button>
-        </div>
+    <div class="user-list" id="userList">
+      <!-- Populated by JS -->
     </div>
+  </div>
+  <div class="chat-panel">
+    <div class="chat-header">
+      <h3 id="currentUserName">Select a fellow</h3>
+      <p id="currentUserStatus">No conversation</p>
+    </div>
+    <div class="chat-messages" id="chatMessages">
+      <div class="empty-state">👈 Choose a user from the left</div>
+    </div>
+    <div class="chat-input-area">
+      <input type="text" id="messageInput" placeholder="Type your reply..." disabled>
+      <button id="sendBtn" disabled>Send</button>
+    </div>
+  </div>
 
-    <script>
-        const socket = io();
-        const msgs = document.getElementById('msgs');
-        const reply = document.getElementById('reply');
+  <script>
+    const socket = io();
+    socket.emit('register-admin');
 
-        function sendReply() {
-            const text = reply.value.trim();
-            if(text) {
-                socket.emit('coachMessage', { text: text });
-                reply.value = '';
-            }
-        }
+    let currentUserId = null;
+    let users = {}; // id -> name
 
-        socket.on('clientMessage', (data) => {
-            const div = document.createElement('div');
-            div.className = 'msg client';
-            div.innerHTML = `<strong>${data.user}:</strong> ${data.text}`;
-            msgs.appendChild(div);
-            msgs.scrollTop = msgs.scrollHeight;
-        });
+    const userListEl = document.getElementById('userList');
+    const chatMessages = document.getElementById('chatMessages');
+    const currentUserName = document.getElementById('currentUserName');
+    const currentUserStatus = document.getElementById('currentUserStatus');
+    const messageInput = document.getElementById('messageInput');
+    const sendBtn = document.getElementById('sendBtn');
 
-        socket.on('coachMessage', (data) => {
-            const div = document.createElement('div');
-            div.className = 'msg coach';
-            div.innerText = data.text;
-            msgs.appendChild(div);
-            msgs.scrollTop = msgs.scrollHeight;
-        });
-    </script>
+    // Update user list
+    socket.on('user-list', (userArray) => {
+      users = {};
+      userArray.forEach(u => { users[u.id] = u.name; });
+      renderUserList();
+    });
+
+    function renderUserList() {
+      userListEl.innerHTML = '';
+      Object.keys(users).forEach(id => {
+        const div = document.createElement('div');
+        div.className = `user-item ${currentUserId === id ? 'selected' : ''}`;
+        div.dataset.userId = id;
+        div.innerHTML = `
+          <div class="user-avatar">${users[id].charAt(0)}</div>
+          <span class="user-name">${users[id]}</span>
+        `;
+        div.addEventListener('click', () => selectUser(id));
+        userListEl.appendChild(div);
+      });
+    }
+
+    // Select a user
+    function selectUser(userId) {
+      currentUserId = userId;
+      renderUserList(); // update highlight
+      currentUserName.textContent = users[userId] || 'Unknown';
+      currentUserStatus.textContent = 'Chatting';
+      messageInput.disabled = false;
+      sendBtn.disabled = false;
+      // Load chat history
+      socket.emit('get-history', userId);
+    }
+
+    // Receive chat history
+    socket.on('chat-history', ({ userId, messages }) => {
+      if (userId !== currentUserId) return;
+      chatMessages.innerHTML = '';
+      messages.forEach(msg => {
+        appendMessage(msg.from, msg.text, msg.timestamp);
+      });
+      if (messages.length === 0) {
+        chatMessages.innerHTML = '<div class="empty-state">No messages yet. Say hello!</div>';
+      }
+    });
+
+    // New message from a user
+    socket.on('new-message', (msg) => {
+      // If we are currently viewing that user, display it
+      if (msg.userId === currentUserId) {
+        appendMessage('user', msg.text, msg.timestamp);
+      }
+      // Update user list maybe with a badge? Not needed for now.
+    });
+
+    // Message sent confirmation (echo from server)
+    socket.on('message-sent', (msg) => {
+      if (msg.userId === currentUserId) {
+        appendMessage('admin', msg.text, msg.timestamp);
+      }
+    });
+
+    function appendMessage(sender, text, timestamp) {
+      // Remove empty state if present
+      if (chatMessages.children.length === 1 && chatMessages.children[0].classList.contains('empty-state')) {
+        chatMessages.innerHTML = '';
+      }
+      const msgDiv = document.createElement('div');
+      msgDiv.className = `message ${sender}`;
+      msgDiv.innerHTML = `
+        <div>${text}</div>
+        <div class="timestamp">${new Date(timestamp).toLocaleTimeString()}</div>
+      `;
+      chatMessages.appendChild(msgDiv);
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    // Send reply
+    function sendReply() {
+      const text = messageInput.value.trim();
+      if (!text || !currentUserId) return;
+      socket.emit('admin-message', { userId: currentUserId, text });
+      messageInput.value = '';
+    }
+    sendBtn.addEventListener('click', sendReply);
+    messageInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') sendReply();
+    });
+  </script>
 </body>
 </html>
