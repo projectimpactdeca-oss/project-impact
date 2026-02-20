@@ -1717,6 +1717,14 @@
         <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
     </svg>
 </div>
+<!-- AI Assistant Widget -->
+<div class="ai-widget" onclick="toggleAIPanel()">
+    <span class="chat-tooltip">Ask Jewel AI</span>
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="10"/>
+        <path d="M12 16v-4M12 8h.01"/>
+    </svg>
+</div>
 <!-- Toast Notification -->
 <div id="toast" class="toast">
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2">
@@ -1784,6 +1792,20 @@
     }
     );
 </script>
+        <!-- AI Chat Panel -->
+<div class="ai-panel" id="aiPanel" style="display: none;">
+    <div class="chat-header">
+        <strong>Jewel AI</strong>
+        <button id="closeAIChat">✕</button>
+    </div>
+    <div class="chat-messages" id="aiMessages">
+        <div class="chat-message ai">Hi! I'm Jewel AI. Ask me anything about leadership, CSR, or your fellowship.</div>
+    </div>
+    <div class="chat-input">
+        <input id="aiInput" placeholder="Ask a question..." />
+        <button id="sendAI">Send</button>
+    </div>
+</div>
 </body></html>
 <!-- ====== FIXES APPENDED (Layout + Chat) ====== -->
 <style>
@@ -1849,6 +1871,25 @@
         padding: 12px;
         border-top: 1px solid #e5e7eb
     }
+    .ai-panel {
+    position: fixed;
+    bottom: 110px;
+    right: 100px;  /* aligns under the AI widget */
+    width: 340px;
+    height: 440px;
+    background: #fff;
+    border-radius: 16px;
+    display: none;
+    flex-direction: column;
+    box-shadow: 0 20px 30px rgba(37,99,235,0.25);
+    z-index: 120;
+}
+.ai-panel .chat-header {
+    background: linear-gradient(135deg,#2563eb,#1e3a8a);
+}
+.chat-message.ai {
+    background: rgba(37,99,235,0.08);
+}
 </style>
 <div class="chat-panel" id="chatPanel" style="display: none;">
   <div class="chat-header">
@@ -1984,4 +2025,65 @@
       showToast(`Welcome, ${userName}!`);
     }, 500);
   });
+    // ===== AI Assistant =====
+const aiWidget = document.querySelector('.ai-widget');
+const aiPanel = document.getElementById('aiPanel');
+const closeAIChat = document.getElementById('closeAIChat');
+const sendAI = document.getElementById('sendAI');
+const aiInput = document.getElementById('aiInput');
+const aiMessages = document.getElementById('aiMessages');
+
+function toggleAIPanel() {
+    if (aiPanel.style.display === 'flex') {
+        aiPanel.style.display = 'none';
+    } else {
+        aiPanel.style.display = 'flex';
+        // Load AI history when opening
+        socket.emit('get-ai-history');
+    }
+}
+
+aiWidget.onclick = toggleAIPanel;
+closeAIChat.onclick = () => aiPanel.style.display = 'none';
+
+function sendAIMessage() {
+    const text = aiInput.value.trim();
+    if (!text) return;
+    appendAIMessage('user', text);
+    socket.emit('user-ai-message', text);
+    aiInput.value = '';
+}
+sendAI.onclick = sendAIMessage;
+aiInput.onkeydown = (e) => {
+    if (e.key === 'Enter') sendAIMessage();
+};
+
+function appendAIMessage(sender, text) {
+    const msgDiv = document.createElement('div');
+    msgDiv.className = `chat-message ${sender === 'user' ? 'user' : 'ai'}`;
+    msgDiv.textContent = text;
+    aiMessages.appendChild(msgDiv);
+    aiMessages.scrollTop = aiMessages.scrollHeight;
+}
+
+// Listen for AI response
+socket.on('ai-response', (msg) => {
+    appendAIMessage('ai', msg.text);
+});
+
+// Load AI history
+socket.on('ai-history', (history) => {
+    // Clear existing messages except the initial greeting
+    aiMessages.innerHTML = '';
+    if (history.length === 0) {
+        const greeting = document.createElement('div');
+        greeting.className = 'chat-message ai';
+        greeting.textContent = 'Hi! I\'m Jewel AI. Ask me anything about leadership, CSR, or your fellowship.';
+        aiMessages.appendChild(greeting);
+    } else {
+        history.forEach(msg => {
+            appendAIMessage(msg.role === 'user' ? 'user' : 'ai', msg.text);
+        });
+    }
+});
 </script>
