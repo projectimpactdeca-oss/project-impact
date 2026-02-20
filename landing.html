@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Project IMPACT – Access</title>
+  <style>
+    body {
+      margin: 0;
+      height: 100vh;
+      background: linear-gradient(135deg, #822841 0%, #501423 100%);
+      font-family: 'Manrope', sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+    }
+    .card {
+      background: rgba(255,255,255,0.1);
+      backdrop-filter: blur(10px);
+      border-radius: 24px;
+      padding: 48px;
+      text-align: center;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+      border: 1px solid rgba(255,255,255,0.2);
+    }
+    h1 {
+      font-size: 48px;
+      margin-bottom: 16px;
+      font-weight: 800;
+    }
+    p {
+      font-size: 18px;
+      opacity: 0.8;
+      margin-bottom: 32px;
+    }
+    .buttons {
+      display: flex;
+      gap: 20px;
+      justify-content: center;
+    }
+    .btn {
+      padding: 14px 32px;
+      border: none;
+      border-radius: 40px;
+      font-weight: 700;
+      font-size: 18px;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+      text-decoration: none;
+      color: white;
+    }
+    .btn-user {
+      background: #059669;
+      box-shadow: 0 8px 16px rgba(5,150,105,0.3);
+    }
+    .btn-admin {
+      background: #d97706;
+      box-shadow: 0 8px 16px rgba(217,119,6,0.3);
+    }
+    .btn:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 24px rgba(0,0,0,0.3);
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Project IMPACT</h1>
+    <p>Choose your portal</p>
+    <div class="buttons">
+      <a href="/user" class="btn btn-user">I'm a Fellow</a>
+      <a href="/admin" class="btn btn-admin">I'm a Coach</a>
+    </div>
+  </div>
+</body>
+</html>
