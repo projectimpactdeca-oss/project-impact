@@ -2,14 +2,16 @@ const express = require('express');
 const path = require('path');
 const http = require('http');
 const socketIo = require('socket.io');
+const axios = require('axios');
 
 const app = express();
 const server = http.createServer(app);
 const io = socketIo(server);
 
 const PORT = process.env.PORT || 3000;
+const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY; // Must be set in Render env
 
-// Serve static files from the "public" folder
+// Serve static files
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Routes
@@ -26,7 +28,7 @@ app.get('/admin', (req, res) => {
 });
 
 // In-memory storage
-const users = {};        // socketId -> { id, name, messages: [] }
+const users = {};        // socketId -> { id, name, messages: [], aiMessages: [] }
 const adminSockets = new Set();
 
 io.on('connection', (socket) => {
@@ -38,9 +40,9 @@ io.on('connection', (socket) => {
     users[socket.id] = {
       id: socket.id,
       name: name,
-      messages: []
+      messages: [],       // coach chat
+      aiMessages: []      // AI chat history
     };
-    // Notify admin about new user
     io.to('admin').emit('user-list', getUsersList());
     console.log(`User registered: ${name} (${socket.id})`);
   });
@@ -53,7 +55,7 @@ io.on('connection', (socket) => {
     console.log('Admin connected:', socket.id);
   });
 
-  // User sends a message to admin
+  // User sends a message to admin (coach)
   socket.on('user-message', (text) => {
     const user = users[socket.id];
     if (!user) return;
@@ -65,7 +67,6 @@ io.on('connection', (socket) => {
       userName: user.name
     };
     user.messages.push(msg);
-    // Send to admin room
     io.to('admin').emit('new-message', msg);
   });
 
@@ -82,17 +83,56 @@ io.on('connection', (socket) => {
     if (users[userId]) {
       users[userId].messages.push(msg);
     }
-    // Send to that user only
     userSocket.emit('admin-message', msg);
-    // Also echo to admin's own chat window for consistency
     socket.emit('message-sent', msg);
   });
 
-  // Admin requests chat history for a user
+  // Admin requests coach chat history for a user
   socket.on('get-history', (userId) => {
     const user = users[userId];
     if (user) {
       socket.emit('chat-history', { userId, messages: user.messages });
+    }
+  });
+
+  // ----- AI Assistant -----
+  // User sends a message to AI
+  socket.on('user-ai-message', async (text) => {
+    const user = users[socket.id];
+    if (!user) return;
+
+    // Store user's question
+    const userMsg = {
+      role: 'user',
+      text: text,
+      timestamp: Date.now()
+    };
+    user.aiMessages.push(userMsg);
+
+    try {
+      const reply = await callDeepSeekAPI(text, user.aiMessages);
+      const aiMsg = {
+        role: 'assistant',
+        text: reply,
+        timestamp: Date.now()
+      };
+      user.aiMessages.push(aiMsg);
+      socket.emit('ai-response', aiMsg);
+    } catch (error) {
+      console.error('DeepSeek API error:', error.message);
+      socket.emit('ai-response', {
+        role: 'assistant',
+        text: 'Sorry, I encountered an error. Please try again later.',
+        timestamp: Date.now()
+      });
+    }
+  });
+
+  // User requests AI chat history
+  socket.on('get-ai-history', () => {
+    const user = users[socket.id];
+    if (user) {
+      socket.emit('ai-history', user.aiMessages);
     }
   });
 
@@ -109,8 +149,40 @@ io.on('connection', (socket) => {
   });
 });
 
+// Helper: return list of active users for admin
 function getUsersList() {
   return Object.values(users).map(u => ({ id: u.id, name: u.name }));
+}
+
+// Call DeepSeek API
+async function callDeepSeekAPI(userMessage, history) {
+  if (!DEEPSEEK_API_KEY) {
+    throw new Error('DEEPSEEK_API_KEY not set');
+  }
+
+  // Format conversation for DeepSeek (use the full history)
+  const messages = history.map(msg => ({
+    role: msg.role,
+    content: msg.text
+  }));
+
+  const response = await axios.post(
+    'https://api.deepseek.com/v1/chat/completions',
+    {
+      model: 'deepseek-chat',  // or 'deepseek-coder' if you prefer
+      messages: messages,
+      temperature: 0.7,
+      max_tokens: 500
+    },
+    {
+      headers: {
+        'Authorization': `Bearer ${DEEPSEEK_API_KEY}`,
+        'Content-Type': 'application/json'
+      }
+    }
+  );
+
+  return response.data.choices[0].message.content;
 }
 
 server.listen(PORT, () => {
